@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from "react";
 import { getNewsFromApi, getGuardianNews, getNYTNews } from "./api";
 import InputField from "./components/UI/InputField";
@@ -5,16 +6,21 @@ import Header from "./components/Header";
 import Articles from "./components/Articles";
 import Checkbox from "./components/UI/Checkbox";
 import PrimaryButton from "./components/UI/PrimaryButton";
+import useLocalStorage from "./hooks/useLocalStorage";
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
-  const [showNewsApi, setShowNewsApi] = useState(true);
-  const [showGuardian, setShowGuardian] = useState(true);
-  const [showNewYorkTimes, setShowNewYorkTimes] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [newsApiData, setNewsApiData] = useState([]);
-  const [guardianData, setGuardianData] = useState([]);
   const [newYorkTimesData, setNewYorkTimesData] = useState([]);
+  const [guardianData, setGuardianData] = useState([]);
+  const [newsApiData, setNewsApiData] = useState([]);
+
+  const [showNewYorkTimes, setShowNewYorkTimes] = useLocalStorage(
+    "showNewYorkTimes",
+    true
+  );
+  const [showGuardian, setShowGuardian] = useLocalStorage("showGuardian", true);
+  const [showNewsApi, setShowNewsApi] = useLocalStorage("showNewsApi", true);
 
   const fetchNews = async () => {
     setIsLoading(true);
@@ -34,12 +40,6 @@ function App() {
     fetchNews();
   }, []);
 
-  const handleCheckboxChange = (setter) => {
-    return () => {
-      setter((prev) => !prev);
-    };
-  };
-
   const handleSearch = () => {
     fetchNews();
   };
@@ -54,17 +54,17 @@ function App() {
             <Checkbox
               label="The New York Times"
               checked={showNewYorkTimes}
-              onChange={handleCheckboxChange(setShowNewYorkTimes)}
-            />
-            <Checkbox
-              label="News Api"
-              checked={showNewsApi}
-              onChange={handleCheckboxChange(setShowNewsApi)}
+              onChange={() => setShowNewYorkTimes(!showNewYorkTimes)}
             />
             <Checkbox
               label="The Guardian"
               checked={showGuardian}
-              onChange={handleCheckboxChange(setShowGuardian)}
+              onChange={() => setShowGuardian(!showGuardian)}
+            />
+            <Checkbox
+              label="News Api"
+              checked={showNewsApi}
+              onChange={() => setShowNewsApi(!showNewsApi)}
             />
           </div>
 
@@ -98,6 +98,17 @@ function App() {
               />
             ))}
 
+          {showGuardian &&
+            guardianData.map((item, index) => (
+              <Articles
+                key={index}
+                source="The Guardian"
+                date={item.webPublicationDate?.substring(0, 10)}
+                time={item.webPublicationDate?.substring(11, 16)}
+                title={item.webTitle}
+              />
+            ))}
+
           {showNewsApi &&
             newsApiData.map((item, index) => (
               <Articles
@@ -107,17 +118,6 @@ function App() {
                 time={item.publishedAt?.substring(11, 16)}
                 title={item.title}
                 description={item.description}
-              />
-            ))}
-
-          {showGuardian &&
-            guardianData.map((item, index) => (
-              <Articles
-                key={index}
-                source="The Guardian"
-                date={item.webPublicationDate?.substring(0, 10)}
-                time={item.webPublicationDate?.substring(11, 16)}
-                title={item.webTitle}
               />
             ))}
         </div>
