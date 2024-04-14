@@ -1,59 +1,107 @@
 import { useEffect, useState } from "react";
-import Header from "./components/Header";
+import { getNewsFromApi, getGuardianNews, getNYTNews } from "./api";
 import InputField from "./components/UI/InputField";
-import axios from "axios";
+import Header from "./components/Header";
 import Articles from "./components/Articles";
-
-const NEWS_API_KEY = "13326b71e19d445b86cb2cdc6030f67c";
-const THE_GUARDIAN_API_KEY = "7eaaecc2-df80-447d-9c13-3242b190b3fd";
-const NYT_API_KEY = "GQ5NAP4sAhOpEU9yLDbyAuenLX8FQdla";
+import Checkbox from "./components/UI/Checkbox";
+import PrimaryButton from "./components/UI/PrimaryButton";
 
 function App() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [showNewsApi, setShowNewsApi] = useState(true);
+  const [showGuardian, setShowGuardian] = useState(true);
+  const [showNewYorkTimes, setShowNewYorkTimes] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   const [newsApiData, setNewsApiData] = useState([]);
   const [guardianData, setGuardianData] = useState([]);
   const [newYorkTimesData, setNewYorkTimesData] = useState([]);
 
+  const fetchNews = async () => {
+    setIsLoading(true);
+
+    const newsApi = await getNewsFromApi();
+    const guardianNews = await getGuardianNews();
+    const nytNews = await getNYTNews(searchTerm);
+
+    setNewsApiData(newsApi);
+    setGuardianData(guardianNews);
+    setNewYorkTimesData(nytNews);
+
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    axios
-      .get(
-        `https://newsapi.org/v2/top-headlines?country=us&apiKey=${NEWS_API_KEY}`
-      )
-      .then((response) => {
-        console.log(response.data.articles);
-        setNewsApiData(response.data.articles);
-      });
-
-    axios
-      .get(
-        `https://content.guardianapis.com/search?api-key=${THE_GUARDIAN_API_KEY}`
-      )
-      .then((response) => {
-        setGuardianData(response.data.response.results);
-      });
-
-    axios
-      .get(
-        `https://api.nytimes.com/svc/search/v2/articlesearch.json?q=election&api-key=${NYT_API_KEY}`
-      )
-      .then((response) => {
-        setNewYorkTimesData(response.data.response.docs);
-      });
+    fetchNews();
   }, []);
 
+  const handleCheckboxChange = (setter) => {
+    return () => {
+      setter((prev) => !prev);
+    };
+  };
+
+  const handleSearch = () => {
+    fetchNews();
+  };
+
   return (
-    <div className="">
+    <>
       <Header />
 
       <div className="pt-24 px-12 max-w-6xl mx-auto bg-gray-50 min-h-[calc(100vh-4rem)] mb-24">
-        <div className="w-[40%]">
-          <InputField type="text" id="search" placeholder="Search" required />
+        <div className="flex flex-col lg:flex-row justify-between lg:items-end p-1">
+          <div className="md:flex gap-4 pb-1">
+            <Checkbox
+              label="The New York Times"
+              checked={showNewYorkTimes}
+              onChange={handleCheckboxChange(setShowNewYorkTimes)}
+            />
+            <Checkbox
+              label="News Api"
+              checked={showNewsApi}
+              onChange={handleCheckboxChange(setShowNewsApi)}
+            />
+            <Checkbox
+              label="The Guardian"
+              checked={showGuardian}
+              onChange={handleCheckboxChange(setShowGuardian)}
+            />
+          </div>
+
+          <div className="flex gap-2 justify-end items-center lg:mt-0 mt-3">
+            <InputField
+              className="md:min-w-[350px]"
+              type="text"
+              id="search"
+              placeholder="Search"
+              onChange={(e) => setSearchTerm(e.target.value)}
+              required
+            />
+
+            <PrimaryButton className="h-10" secondary onClick={handleSearch}>
+              Search
+            </PrimaryButton>
+          </div>
         </div>
 
+        {isLoading && <div>Loading News...</div>}
+
         <div className="p-1">
-          {newsApiData &&
-            newsApiData.map((item) => (
+          {showNewYorkTimes &&
+            newYorkTimesData.map((item, index) => (
               <Articles
-                key={item.id}
+                key={index}
+                source="The New York Times"
+                date={item.pub_date?.substring(0, 10)}
+                time={item.pub_date?.substring(11, 16)}
+                title={item.snippet}
+              />
+            ))}
+
+          {showNewsApi &&
+            newsApiData.map((item, index) => (
+              <Articles
+                key={index}
                 source="News Api"
                 date={item.publishedAt?.substring(0, 10)}
                 time={item.publishedAt?.substring(11, 16)}
@@ -61,13 +109,11 @@ function App() {
                 description={item.description}
               />
             ))}
-        </div>
 
-        <div className="p-1">
-          {guardianData &&
-            guardianData.map((item) => (
+          {showGuardian &&
+            guardianData.map((item, index) => (
               <Articles
-                key={item.id}
+                key={index}
                 source="The Guardian"
                 date={item.webPublicationDate?.substring(0, 10)}
                 time={item.webPublicationDate?.substring(11, 16)}
@@ -75,21 +121,8 @@ function App() {
               />
             ))}
         </div>
-
-        <div className="p-1">
-          {newYorkTimesData &&
-            newYorkTimesData.map((item) => (
-              <Articles
-                key={item.id}
-                source="The New York Times"
-                date={item.pub_date?.substring(0, 10)}
-                time={item.pub_date?.substring(11, 16)}
-                title={item.snippet}
-              />
-            ))}
-        </div>
       </div>
-    </div>
+    </>
   );
 }
 

@@ -1,13 +1,23 @@
-function PrimaryButton({ fullWidth, className, ...props }) {
+function PrimaryButton({ fullWidth, className, secondary, ...props }) {
+  // Base classes that apply to all buttons
+  let baseClasses =
+    "text-sm font-medium rounded-lg px-5 py-2.5 text-center focus:outline-none ring-2 focus:ring-blue-300";
+
+  // Conditional classes based on the `secondary` prop
+  if (secondary) {
+    baseClasses += " text-gray-700 bg-gray-50 hover:bg-gray-200";
+  } else {
+    baseClasses += " text-white bg-blue-700 hover:bg-blue-800";
+  }
+
+  // Determine button width
   const buttonStyle = {
     width: fullWidth ? "100%" : "auto",
   };
 
   return (
     <button
-      className={`text-white bg-blue-700 hover:bg-blue-800 focus:ring-2 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 ${
-        className || ""
-      }`}
+      className={`${baseClasses}  ${className}`}
       style={buttonStyle}
       {...props}
     />

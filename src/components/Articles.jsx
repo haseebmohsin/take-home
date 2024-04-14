@@ -4,7 +4,7 @@ const Articles = ({ source, date, time, title, description }) => {
     borderColor = "border-yellow-400";
   } else if (source === "The Guardian") {
     borderColor = "border-blue-400";
-  } else if (source === "New York Times") {
+  } else if (source === "The New York Times") {
     borderColor = "border-red-400";
   }
 
